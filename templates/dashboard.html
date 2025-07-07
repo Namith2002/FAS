@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <div class="logo">Facial Attendance System</div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('attendance') }}">Attendance</a></li>
+                <li><a href="{{ url_for('register') }}">Register User</a></li>
+                <li><a href="{{ url_for('login') }}">Login</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="form-title">Dashboard</h1>
+        
+        <div class="dashboard-container">
+            <div class="card">
+                <h2 class="card-title">Attendance Summary</h2>
+                <p>View your attendance records and statistics.</p>
+                <a href="{{ url_for('attendance_summary') }}"><button class="btn">View Details</button></a>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title">User Profile</h2>
+                <p>Manage your account settings and personal information.</p>
+                <a href="{{ url_for('user_profile') }}"><button class="btn">Edit Profile</button></a>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title">Reports</h2>
+                <p>Generate and download attendance reports.</p>
+                <a href="{{ url_for('reports') }}"><button class="btn">Generate Report</button></a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Facial Attendance System. All rights reserved.</p>
+    </footer>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

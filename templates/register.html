@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Registration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <div class="logo">Facial Attendance System</div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('attendance') }}">Attendance</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="form-container">
+            <h1 class="form-title">User Registration</h1>
+            
+            <!-- Live video feed -->
+            <div class="video-container">
+                <video id="video" width="320" height="240" autoplay></video>
+                <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+                <div class="controls">
+                    <button id="capture" class="btn" type="button">Capture Photo</button>
+                </div>
+            </div>
+            
+            <form action="/register" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="photo">Upload Photo</label>
+                    <input type="file" id="photo" name="photo" accept="image/*" class="form-control" required>
+                    <small>Or use the camera above to capture your photo</small>
+                </div>
+                <button type="submit" class="btn btn-block">Register</button>
+            </form>
+            
+            <div class="post-registration-info" style="margin-top: 20px; text-align: center;">
+                <p>After registration, you can <a href="{{ url_for('attendance') }}">mark your attendance</a> using facial recognition.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Facial Attendance System. All rights reserved.</p>
+    </footer>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Registration page specific JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // Access the webcam
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        const video = document.getElementById('video');
+                        video.srcObject = stream;
+                    })
+                    .catch(error => {
+                        console.error('Error accessing webcam:', error);
+                        document.querySelector('.video-container').innerHTML = `
+                            <div class="error">
+                                <p>Error accessing webcam: ${error.message}</p>
+                                <p>Please ensure you have granted camera permissions or use the file upload option.</p>
+                            </div>
+                        `;
+                    });
+                
+                // Capture button functionality
+                document.getElementById('capture').addEventListener('click', function() {
+                    const canvas = document.getElementById('canvas');
+                    const context = canvas.getContext('2d');
+                    const video = document.getElementById('video');
+                    
+                    // Draw the current video frame on the canvas
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Convert canvas to blob
+                    canvas.toBlob(function(blob) {
+                        // Create a File object from the blob
+                        const file = new File([blob], "webcam-capture.jpg", { type: "image/jpeg" });
+                        
+                        // Create a FileList-like object
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        
+                        // Set the file input's files property
+                        document.getElementById('photo').files = dataTransfer.files;
+                        
+                        // Show success message
+                        const small = document.querySelector('.form-group small');
+                        small.textContent = 'Photo captured successfully!';
+                        small.style.color = 'green';
+                    }, 'image/jpeg');
+                });
+            } else {
+                document.querySelector('.video-container').innerHTML = `
+                    <div class="error">
+                        <p>Your browser does not support webcam access.</p>
+                        <p>Please use the file upload option instead.</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

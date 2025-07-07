@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .highlight-prompt {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { background-color: #f8f9fa; }
+            50% { background-color: #e2f3ff; }
+            100% { background-color: #f8f9fa; }
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .attendance-mode-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .mode-btn {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: 2px solid #007bff;
+            background-color: #fff;
+            color: #007bff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .mode-btn.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+        
+        .recognized-users {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .user-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            width: 150px;
+            text-align: center;
+            background-color: #f8f9fa;
+        }
+        
+        .user-card.recognized {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <div class="logo">Facial Attendance System</div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('attendance') }}">Attendance</a></li>
+                <li><a href="{{ url_for('register') }}">Register</a></li>
+                <li><a href="{{ url_for('login') }}">Login</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="form-title">Attendance Page</h1>
+        
+        <div class="attendance-mode-toggle">
+            <button class="mode-btn active" id="individual-mode">Individual Attendance</button>
+            <button class="mode-btn" id="group-mode">Group Attendance</button>
+        </div>
+        
+        <div class="attendance-container">
+            <!-- Live video feed -->
+            <div class="video-container">
+                <video id="video" width="640" height="480" autoplay></video>
+                <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+            </div>
+            
+            <div class="controls">
+                <button id="capture" class="btn">Capture</button>
+            </div>
+            
+            <!-- Manual upload form -->
+            <div class="upload-container">
+                <h2>Or Upload an Image</h2>
+                <form action="/attendance" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <input type="file" name="image" accept="image/*" class="form-control">
+                        <input type="hidden" name="mode" id="attendance-mode" value="individual">
+                    </div>
+                    <button type="submit" class="btn">Upload</button>
+                </form>
+            </div>
+            
+            <!-- Results section -->
+            <div class="results-container">
+                {% if error %}
+                <div class="error">
+                    <p>Error: {{ error }}</p>
+                </div>
+                {% endif %}
+                
+                {% if results %}
+                <h2>Recognition Results:</h2>
+                <div class="{% if 'successfully' in results %}success-message{% endif %}">
+                    <pre>{{ results }}</pre>
+                </div>
+                
+                {% if recognized_users %}
+                <div class="recognized-users">
+                    {% for user in recognized_users %}
+                    <div class="user-card recognized">
+                        <div class="user-name">{{ user.username }}</div>
+                        <div class="timestamp">{{ user.timestamp }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <p>Capture or upload an image to see recognition results.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Registration prompt -->
+            <div class="registration-prompt" style="margin-top: 20px; text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+                <p>Not registered yet? <a href="{{ url_for('register') }}" class="btn">Register your face</a></p>
+                <p>Registration is required for accurate attendance tracking.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Facial Attendance System. All rights reserved.</p>
+    </footer>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Attendance mode toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const individualModeBtn = document.getElementById('individual-mode');
+            const groupModeBtn = document.getElementById('group-mode');
+            const attendanceModeInput = document.getElementById('attendance-mode');
+            
+            individualModeBtn.addEventListener('click', function() {
+                individualModeBtn.classList.add('active');
+                groupModeBtn.classList.remove('active');
+                attendanceModeInput.value = 'individual';
+            });
+            
+            groupModeBtn.addEventListener('click', function() {
+                groupModeBtn.classList.add('active');
+                individualModeBtn.classList.remove('active');
+                attendanceModeInput.value = 'group';
+            });
+            
+            // Capture button functionality for group mode
+            const captureBtn = document.getElementById('capture');
+            if (captureBtn) {
+                captureBtn.addEventListener('click', function() {
+                    const canvas = document.getElementById('canvas');
+                    const context = canvas.getContext('2d');
+                    const video = document.getElementById('video');
+                    
+                    // Show loading indicator
+                    const resultsContainer = document.querySelector('.results-container');
+                    resultsContainer.innerHTML = '<p>Processing image...</p>';
+                    
+                    // Draw the current video frame on the canvas
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Convert canvas to blob and create a form to submit
+                    canvas.toBlob(function(blob) {
+                        const formData = new FormData();
+                        formData.append('image', blob, 'capture.jpg');
+                        formData.append('mode', attendanceModeInput.value);
+                        
+                        // Send the image to the server
+                        fetch('/attendance', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.text())
+                        .then(html => {
+                            // Extract just the results section from the response
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newResults = doc.querySelector('.results-container');
+                            
+                            if (newResults) {
+                                resultsContainer.innerHTML = newResults.innerHTML;
+                            } else {
+                                resultsContainer.innerHTML = '<p>No results returned from server.</p>';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            resultsContainer.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+                        });
+                    }, 'image/jpeg');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
