@@ -26,5 +26,19 @@
         "face_id": "jersey, T-shirt, tee shirt",
         "photo_path": "C:\\Users\\namit\\Music\\FAS2\\uploads\\Namith12_1745999465.jpg",
         "registered_at": "2025-04-30 13:21:06"
+    },
+    {
+        "username": "fardeen",
+        "email": "mohammedfardeen2001@gmail.com",
+        "face_id": "jersey, T-shirt, tee shirt",
+        "photo_path": "C:\\Users\\namit\\Music\\FAS\\uploads\\fardeen_1751886957.jpg",
+        "registered_at": "2025-07-07 16:45:57"
+    },
+    {
+        "username": "fardeen",
+        "email": "mohammedfardeen2001@gmail.com",
+        "face_id": "lab coat, laboratory coat",
+        "photo_path": "C:\\Users\\namit\\Music\\FAS\\uploads\\fardeen_1751887067.jpg",
+        "registered_at": "2025-07-07 16:47:47"
     }
 ]
